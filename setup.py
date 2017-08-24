@@ -13,5 +13,5 @@ setup(
         'console_scripts': [
             'scheduler = scheduler.cli:main'
         ]
-    }, install_requires=['drmaa']
+    }, install_requires=['drmaa', 'PyYAML', 'ujson']
 )

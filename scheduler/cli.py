@@ -2,7 +2,7 @@ import argparse
 import logging
 import sys
 
-from scheduler.parser import yaml
+from scheduler.parser import json
 from scheduler.scheduler import run_batches
 
 logging.basicConfig()
@@ -26,7 +26,8 @@ def main():
         f = sys.stdin
     else:
         f = open(args.batch)
-    batches = yaml.parse_config(f)
+    batches = json.parse_config(f)
+    print('loaded json')
     f.close()
 
     if not args.dry_run:

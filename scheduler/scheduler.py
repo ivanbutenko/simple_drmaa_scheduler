@@ -1,4 +1,4 @@
-from os import getcwd, os
+from os import getcwd, makedirs
 from typing import List
 
 from os.path import join, dirname
@@ -19,7 +19,7 @@ def _run_batch(executor: DRMAAExecutor, batch: Batch, log_dir: str, status_dir: 
             job.name = '{}.{}.txt'.format(batch.name, i)
         if not job.status_path:
             job.status_path = join(status_dir, batch.name, job.name)
-        os.makedirs(dirname(job.status_path), exist_ok=True)
+        makedirs(dirname(job.status_path), exist_ok=True)
 
         job_log = ':'+join(log_dir, job.name)
         job.params = {
