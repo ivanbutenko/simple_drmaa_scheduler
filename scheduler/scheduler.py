@@ -21,7 +21,8 @@ def _run_batch(executor: DRMAAExecutor, batch: Batch, log_dir: str, status_dir: 
             job.status_path = join(status_dir, batch.name, job.name)
         makedirs(dirname(job.status_path), exist_ok=True)
 
-        job_log = ':'+join(log_dir, job.name)
+        makedirs(join(log_dir, batch.name), exist_ok=True)
+        job_log = ':'+join(log_dir, batch.name, job.name)
         job.params = {
             'stdout': job_log,
             'join_streams': True,
