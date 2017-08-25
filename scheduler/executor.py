@@ -160,6 +160,9 @@ class DRMAAExecutor:
                         return False
                     else:
                         status_ok = False
+                logger.info('{} jobs left'.format(
+                    len(self._active_jobs) + self._job_queue.qsize()
+                ))
             if not self._active_jobs:
                 break
             time.sleep(1)
