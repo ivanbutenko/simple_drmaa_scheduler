@@ -17,6 +17,7 @@ def main():
     parser.add_argument('-j', '--max-jobs', type=int)
 
     parser.add_argument('-d', '--dry-run', action='store_true')
+    parser.add_argument('--print-only', action='store_true')
     parser.add_argument('-K', '--stop-on-first-error', action='store_true')
     parser.add_argument('-S', '--skip-already-done', action='store_true')
 
@@ -37,7 +38,8 @@ def main():
             max_jobs=args.max_jobs,
             stop_on_first_error=args.stop_on_first_error,
             status_dir=args.status_dir,
-            skip_already_done=args.skip_already_done
+            skip_already_done=args.skip_already_done,
+            dry_run=args.print_only,  # TODO: naming refactor
         )
     else:
         for b in batches:

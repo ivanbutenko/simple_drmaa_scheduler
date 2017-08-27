@@ -38,11 +38,13 @@ def _run_batch(executor: DRMAAExecutor, batch: Batch, log_dir: str, status_dir: 
 def run_batches(batches: List[Batch], log_dir: str, status_dir: str,
                 max_jobs: int,
                 stop_on_first_error: bool,
-                skip_already_done: bool):
+                skip_already_done: bool,
+                dry_run: bool):
     executor = DRMAAExecutor(
         max_jobs=max_jobs,
         stop_on_first_error=stop_on_first_error,
         skip_already_done=skip_already_done,
+        dry_run=dry_run,
     )
     for batch in batches:
         res = _run_batch(executor, batch, log_dir, status_dir)
