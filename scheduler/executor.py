@@ -129,10 +129,10 @@ class DRMAAExecutor:
                     break
                 job = self._job_queue.get()
                 if self._skip_alreagy_done and self._read_status(job) == self.JOB_STATUS_OK:
-                    print("Job {name} is already done".format(name=job.name))
+                    logger.info("Job {name} is already done".format(name=job.name))
                     continue
                 if self._dryrun:
-                    print('Job: {name}'.format(name=job.name))
+                    logger.info('Job: {name}'.format(name=job.name))
                     continue
                 self._run(job)
 
