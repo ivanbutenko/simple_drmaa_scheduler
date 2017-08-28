@@ -19,16 +19,17 @@ def _run_batch(executor: DRMAAExecutor, batch: Batch, log_dir: str, status_dir: 
             job.name = '{}.{}.txt'.format(batch.name, i)
         if not job.status_path:
             job.status_path = join(status_dir, batch.name, job.name)
-        makedirs(dirname(job.status_path), exist_ok=True)
 
+        makedirs(dirname(job.status_path), exist_ok=True)
         makedirs(join(log_dir, batch.name), exist_ok=True)
+
         job_log = ':'+join(log_dir, batch.name, job.name)
-        job.params = {
+        job.params.update({
             'stdout': job_log,
             'join_streams': True,
             'work_dir': getcwd(),
             'job_name': job.name,
-        }
+        })
         executor.queue(job)
     res = executor.wait_for_jobs()
     logger.info('Batch done: {}, ok: {}'.format(batch.name, res))
