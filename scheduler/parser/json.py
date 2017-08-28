@@ -9,7 +9,7 @@ def _parse_job(job_e: Dict[str, Any])->Job:
         command=job_e['command'],
         params=job_e.get('params', {}),
         args=job_e.get('args', []),
-        native_specification=job_e.get('native_specification'),
+        # native_specification=job_e.get('native_specification'),
         name=job_e.get('name'),
     )
 

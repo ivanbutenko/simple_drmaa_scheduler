@@ -13,7 +13,7 @@ class Job:
         self.command = command
         self.args = args
         self.params = params
-        self.nativeSpecification = native_specification
+        # self.nativeSpecification = native_specification
         self.job_id = job_id
         self.start_time = None
         self.end_time = None
