@@ -56,7 +56,6 @@ class DRMAAExecutor:
         jt.args = job.args
 
         params = job.params
-        logger.info(params)
         if params.get('num_slots', 1) > 1:
             # TODO: remove logger.info below
             logger.info('Job {name} requested {n} slots'.format(
