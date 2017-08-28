@@ -48,9 +48,13 @@ def run_batches(batches: List[Batch], log_dir: str, status_dir: str,
         dry_run=dry_run,
     )
     for batch in batches:
-        res = _run_batch(executor, batch, log_dir, status_dir)
-        if not res:
-            logger.warning("Stopping jobs because of error")
+        try:
+            res = _run_batch(executor, batch, log_dir, status_dir)
+            if not res:
+                logger.warning("Stopping jobs because of error")
+                executor.cancel()
+                break
+        except KeyboardInterrupt:
             executor.cancel()
             break
     executor.shutdown()
