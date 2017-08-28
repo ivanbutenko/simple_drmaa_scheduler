@@ -1,5 +1,5 @@
 import logging
-import queue
+from collections import deque
 import shlex
 import shutil
 import time
@@ -26,7 +26,7 @@ class DRMAAExecutor:
         self._session.initialize()
         self._active_jobs = list()  # type: List[Job]
         self._stop_on_first_error = stop_on_first_error
-        self._job_queue = queue.Queue()
+        self._job_queue = deque()
         self._max_jobs = max_jobs
         self._skip_alreagy_done = skip_already_done
         self._dryrun = dry_run
@@ -74,7 +74,7 @@ class DRMAAExecutor:
         return jt
 
     def queue(self, job: Job):
-        self._job_queue.put(job)
+        self._job_queue.append(job)
 
     def _run(self, job: Job):
         if self._drmaa_log_dir:
@@ -124,10 +124,10 @@ class DRMAAExecutor:
     def wait_for_jobs(self):
         status_ok = True
         while True:
-            while not self._job_queue.empty():
+            while len(self._job_queue) != 0:
                 if self._max_jobs is not None and len(self._active_jobs) >= self._max_jobs:
                     break
-                job = self._job_queue.get()
+                job = self._job_queue.popleft()
                 if self._skip_alreagy_done and self._read_status(job) == self.JOB_STATUS_OK:
                     logger.info("Job {name} is already done".format(name=job.name))
                     continue
@@ -165,7 +165,7 @@ class DRMAAExecutor:
                     else:
                         status_ok = False
                 logger.info('{} jobs left'.format(
-                    len(self._active_jobs) + self._job_queue.qsize()
+                    len(self._active_jobs) + len(self._job_queue)
                 ))
             if not self._active_jobs:
                 break
