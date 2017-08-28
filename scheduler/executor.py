@@ -57,6 +57,11 @@ class DRMAAExecutor:
 
         params = job.params
         if params.get('num_slots', 1) > 1:
+            # TODO: remove logger.info below
+            logger.info('Job {name} requested {n} slots'.format(
+                name=job.name,
+                n=params['num_slots'],
+            ))
             jt.nativeSpecification = "-pe make {}".format(params['num_slots'])
 
         if params.get('stdout'):
