@@ -11,7 +11,7 @@ from drmaa.const import JobControlAction
 from drmaa.errors import InvalidJobException, InternalException
 from os.path import exists
 
-from scheduler.job import Job
+from scheduler.job import Job, JobSpec
 
 logger = logging.getLogger(__name__)
 
@@ -41,41 +41,41 @@ class DRMAAExecutor:
                 pass
 
     def _write_status(self, job: Job, status: str):
-        with open(job.status_path, 'w') as f:
+        with open(job.spec.status_path, 'w') as f:
             f.write(status)
 
     def _read_status(self, job: Job)->str:
-        if not exists(job.status_path):
+        if not exists(job.spec.status_path):
             return ''
-        with open(job.status_path) as f:
+        with open(job.spec.status_path) as f:
             return f.read()
 
-    def _create_template(self, job: Job)->drmaa.JobTemplate:
-        jt = self._session.createJobTemplate()
-        jt.remoteCommand = shutil.which(job.command)
-        jt.args = job.args
+    def _write_time(self, job: Job):
+        if exists(job.spec.time_path):
+            with open(job.spec.time_path, 'w') as f:
+                f.write('{}\n'.format(job.end_time - job.start_time))
 
-        params = job.params
-        if params.get('num_slots', 1) > 1:
+    def _create_template(self, spec: JobSpec)->drmaa.JobTemplate:
+        jt = self._session.createJobTemplate()
+        jt.remoteCommand = shutil.which(spec.command)
+        jt.args = spec.args
+
+        if spec.num_slots > 1:
             # TODO: remove logger.info below
             logger.info('Job {name} requested {n} slots'.format(
-                name=job.name,
-                n=params['num_slots'],
+                name=spec.name,
+                n=spec.num_slots,
             ))
-            jt.nativeSpecification = "-pe make {}".format(params['num_slots'])
+            jt.nativeSpecification = "-pe make {}".format(spec.num_slots)
 
-        if params.get('stdout'):
-            jt.outputPath = params['stdout']
-        if params.get('stderr'):
-            jt.errorPath = params['stderr']
-        if params.get('join_streams'):
+        if spec.log_path:
+            jt.outputPath = spec.log_path
             jt.joinFiles = True
-        if params.get('job_name'):
-            jt.jobName = params['job_name']
-        if params.get('work_dir'):
-            jt.workingDirectory = params['work_dir']
+        if spec.name:
+            jt.jobName = spec.name
+        if spec.work_dir:
+            jt.workingDirectory = spec.work_dir
 
-        jt.params = params
         return jt
 
     def queue(self, job: Job):
@@ -86,7 +86,7 @@ class DRMAAExecutor:
             makedirs(self._drmaa_log_dir)
 
         try:
-            jt = self._create_template(job)
+            jt = self._create_template(job.spec)
             job.job_id = self._session.runJob(jt)
             job.start_time = time.time()
         except (drmaa.InternalException,
@@ -95,7 +95,7 @@ class DRMAAExecutor:
 
         logger.info("Submitted job {name} (id: {id})".format(
             id=job.job_id,
-            name=job.name,
+            name=job.spec.name,
         ))
         self._session.deleteJobTemplate(jt)
         self._active_jobs.append(job)
@@ -106,13 +106,13 @@ class DRMAAExecutor:
     @staticmethod
     def _print_job_error(job: Job):
         logger.error("Job {name} (drmaa id: {d}) finished with error. Log file: {log}".format(
-            name=job.name,
+            name=job.spec.name,
             d=job.job_id,
-            log=job.params.get('stdout', '')
+            log=job.spec.log_path
         ))
-        args_str = " ".join([shlex.quote(arg) for arg in job.args])
+        args_str = " ".join([shlex.quote(arg) for arg in job.spec.args])
         full_command = "{command} {args}".format(
-            command=job.command,
+            command=job.spec.command,
             args=args_str,
         )
 
@@ -157,11 +157,12 @@ class DRMAAExecutor:
                 job.end_time = time.time()
                 if res.hasExited and res.exitStatus == 0:
                     logger.info("Job {name} (id: {id}) successfully finished, time: {time} s.".format(
-                        name=job.name,
+                        name=job.spec.name,
                         id=job.job_id,
                         time=(job.end_time - job.start_time)
                     ))
                     self._write_status(job, self.JOB_STATUS_OK)
+                    self._write_time(job)
                 else:
                     self._write_status(job, self.JOB_STATUS_ERROR)
                     self._print_job_error(job)

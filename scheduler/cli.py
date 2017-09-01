@@ -3,7 +3,9 @@ import logging
 import sys
 
 from scheduler.parser import json
-from scheduler.scheduler import run_batches
+from scheduler.scheduler import Scheduler
+from scheduler.executor import DRMAAExecutor
+
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
@@ -14,6 +16,7 @@ def main():
     parser.add_argument('batch')
     parser.add_argument('--log-dir', '-l', default='log')
     parser.add_argument('--status-dir', '-s', default='status')
+    parser.add_argument('--time-dir', '-T', default='time')
     parser.add_argument('-j', '--max-jobs', type=int)
 
     parser.add_argument('-d', '--dry-run', action='store_true')
@@ -32,15 +35,20 @@ def main():
     f.close()
 
     if not args.dry_run:
-        run_batches(
-            batches=batches,
-            log_dir=args.log_dir,
+        executor = DRMAAExecutor(
             max_jobs=args.max_jobs,
             stop_on_first_error=args.stop_on_first_error,
-            status_dir=args.status_dir,
             skip_already_done=args.skip_already_done,
             dry_run=args.print_only,  # TODO: naming refactor
+
         )
+        scheduler = Scheduler(
+            log_dir=args.log_dir,
+            status_dir=args.status_dir,
+            time_dir=args.time_dir,
+        )
+        scheduler.run_batches(executor, batches)
+
     else:
         for b in batches:
             print('Batch: {} ({} jobs)'.format(b.name, len(b.jobs)))

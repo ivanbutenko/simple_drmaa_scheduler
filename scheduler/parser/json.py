@@ -1,16 +1,21 @@
 from typing import List, Any, Dict
 import ujson as json
 
-from scheduler.job import Batch, Job
+from scheduler.job import Batch, Job, JobSpec
 
 
 def _parse_job(job_e: Dict[str, Any])->Job:
     return Job(
-        command=job_e['command'],
-        params=job_e.get('params', {}),
-        args=job_e.get('args', []),
-        # native_specification=job_e.get('native_specification'),
-        name=job_e.get('name'),
+        spec=JobSpec(
+            command=job_e['command'],
+            args=job_e.get('args', []),
+            num_slots=job_e.get('num_slots', 1),
+            log_path=job_e.get('log_path'),
+            time_path=job_e.get('time_path'),
+            status_path=job_e.get('status_path'),
+            work_dir=job_e.get('work_dir'),
+            name=job_e.get('name'),
+        ),
     )
 
 
