@@ -1,25 +1,21 @@
 import logging
-from collections import deque
-import shlex
 import shutil
 import time
+from collections import deque
 from os import makedirs
 from typing import List
 
 import drmaa
 from drmaa.const import JobControlAction
 from drmaa.errors import InvalidJobException, InternalException
-from os.path import exists, dirname
 
+from executor.base import Executor
 from scheduler.job import Job, JobSpec
 
 logger = logging.getLogger(__name__)
 
 
-class DRMAAExecutor:
-    JOB_STATUS_OK = 'ok'
-    JOB_STATUS_ERROR = 'error'
-
+class DRMAAExecutor(Executor):
     def __init__(self, stop_on_first_error: bool=False, max_jobs: int=None, skip_already_done=False, dry_run: bool=False):
         self._session = drmaa.Session()
         self._drmaa_log_dir = ''
@@ -39,20 +35,6 @@ class DRMAAExecutor:
             except (InvalidJobException, InternalException):
                 # FIXME: This is common - logging a warning would probably confuse the user.
                 pass
-
-    def _write_status(self, job: Job, status: str):
-        with open(job.spec.status_path, 'w') as f:
-            f.write(status)
-
-    def _read_status(self, job: Job)->str:
-        if not exists(job.spec.status_path):
-            return ''
-        with open(job.spec.status_path) as f:
-            return f.read()
-
-    def _write_time(self, job: Job):
-        with open(job.spec.time_path, 'w') as f:
-            f.write('{}\n'.format(job.end_time - job.start_time))
 
     def _create_template(self, spec: JobSpec)->drmaa.JobTemplate:
         jt = self._session.createJobTemplate()
@@ -101,29 +83,6 @@ class DRMAAExecutor:
 
     def shutdown(self):
         self._session.exit()
-
-    @staticmethod
-    def _print_job_error(job: Job):
-        logger.error("Job {name} (drmaa id: {d}) finished with error. Log file: {log}".format(
-            name=job.spec.name,
-            d=job.job_id,
-            log=job.spec.log_path
-        ))
-        args_str = " ".join([shlex.quote(arg) for arg in job.spec.args])
-        full_command = "{command} {args}".format(
-            command=job.spec.command,
-            args=args_str,
-        )
-
-        logger.error("\tCommand was: {command}".format(
-            command=full_command,
-        ))
-
-        logger.error("\tStart time: {start_time}, end time: {end_time}, total seconds: {time} s.".format(
-            start_time=job.start_time,
-            end_time=job.end_time,
-            time=(job.end_time - job.start_time)
-        ))
 
     def wait_for_jobs(self):
         status_ok = True

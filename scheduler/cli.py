@@ -2,10 +2,9 @@ import argparse
 import logging
 import sys
 
+from executor.drmaa import DRMAAExecutor
 from scheduler.parser import json
 from scheduler.scheduler import Scheduler
-from scheduler.executor import DRMAAExecutor
-
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)

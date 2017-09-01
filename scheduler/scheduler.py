@@ -1,12 +1,10 @@
+import logging
 from os import getcwd, makedirs
+from os.path import join, dirname
 from typing import List
 
-from os.path import join, dirname
-
-from scheduler.executor import DRMAAExecutor
+from executor.base import Executor
 from scheduler.job import Batch
-import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +15,7 @@ class Scheduler:
         self.status_dir = status_dir
         self.log_dir = log_dir
 
-    def run_batches(self, executor: DRMAAExecutor, batches: List[Batch]):
+    def run_batches(self, executor: Executor, batches: List[Batch]):
         for batch in batches:
             try:
                 res = self._run_batch(executor, batch)
@@ -30,7 +28,7 @@ class Scheduler:
                 break
         executor.shutdown()
 
-    def _run_batch(self, executor: DRMAAExecutor, batch: Batch):
+    def _run_batch(self, executor: Executor, batch: Batch):
         logger.info('Executing batch: {} ({} jobs)'.format(batch.name, len(batch.jobs)))
 
         for i, job in enumerate(batch.jobs):
