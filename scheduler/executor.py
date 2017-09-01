@@ -9,7 +9,7 @@ from typing import List
 import drmaa
 from drmaa.const import JobControlAction
 from drmaa.errors import InvalidJobException, InternalException
-from os.path import exists
+from os.path import exists, dirname
 
 from scheduler.job import Job, JobSpec
 
@@ -51,9 +51,8 @@ class DRMAAExecutor:
             return f.read()
 
     def _write_time(self, job: Job):
-        if exists(job.spec.time_path):
-            with open(job.spec.time_path, 'w') as f:
-                f.write('{}\n'.format(job.end_time - job.start_time))
+        with open(job.spec.time_path, 'w') as f:
+            f.write('{}\n'.format(job.end_time - job.start_time))
 
     def _create_template(self, spec: JobSpec)->drmaa.JobTemplate:
         jt = self._session.createJobTemplate()
