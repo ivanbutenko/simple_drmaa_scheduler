@@ -132,12 +132,12 @@ class DRMAAExecutor:
             while len(self._job_queue) != 0:
                 if self._max_jobs is not None and len(self._active_jobs) >= self._max_jobs:
                     break
-                job = self._job_queue.popleft()
+                job = self._job_queue.popleft() # type: Job
                 if self._skip_alreagy_done and self._read_status(job) == self.JOB_STATUS_OK:
-                    logger.info("Job {name} is already done".format(name=job.name))
+                    logger.info("Job {name} is already done".format(name=job.spec.name))
                     continue
                 if self._dryrun:
-                    logger.info('Job: {name}'.format(name=job.name))
+                    logger.info('Job: {name}'.format(name=job.spec.name))
                     continue
                 self._run(job)
 
