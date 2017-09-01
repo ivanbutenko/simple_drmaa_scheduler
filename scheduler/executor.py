@@ -69,7 +69,7 @@ class DRMAAExecutor:
             jt.nativeSpecification = "-pe make {}".format(spec.num_slots)
 
         if spec.log_path:
-            jt.outputPath = spec.log_path
+            jt.outputPath = ':'+spec.log_path
             jt.joinFiles = True
         if spec.name:
             jt.jobName = spec.name
