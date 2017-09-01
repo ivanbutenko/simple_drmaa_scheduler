@@ -38,7 +38,6 @@ def main():
             max_jobs=args.max_jobs,
             stop_on_first_error=args.stop_on_first_error,
             skip_already_done=args.skip_already_done,
-            dry_run=args.print_only,  # TODO: naming refactor
 
         )
         scheduler = Scheduler(

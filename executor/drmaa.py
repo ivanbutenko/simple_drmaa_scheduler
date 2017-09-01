@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class DRMAAExecutor(Executor):
-    def __init__(self, stop_on_first_error: bool=False, max_jobs: int=None, skip_already_done=False, dry_run: bool=False):
+    def __init__(self, stop_on_first_error: bool=False, max_jobs: int=None, skip_already_done=False):
         self._session = drmaa.Session()
         self._drmaa_log_dir = ''
         self._session.initialize()
@@ -25,7 +25,6 @@ class DRMAAExecutor(Executor):
         self._job_queue = deque()
         self._max_jobs = max_jobs
         self._skip_alreagy_done = skip_already_done
-        self._dryrun = dry_run
 
     def cancel(self):
         logger.warning("Cancelling {} jobs".format(len(self._active_jobs)))
@@ -93,9 +92,6 @@ class DRMAAExecutor(Executor):
                 job = self._job_queue.popleft() # type: Job
                 if self._skip_alreagy_done and self._read_status(job) == self.JOB_STATUS_OK:
                     logger.info("Job {name} is already done".format(name=job.spec.name))
-                    continue
-                if self._dryrun:
-                    logger.info('Job: {name}'.format(name=job.spec.name))
                     continue
                 self._run(job)
 
