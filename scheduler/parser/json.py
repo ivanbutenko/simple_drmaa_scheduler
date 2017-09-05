@@ -9,7 +9,7 @@ def _parse_job(job_e: Dict[str, Any])->Job:
         spec=JobSpec(
             command=job_e['command'],
             args=job_e.get('args', []),
-            num_slots=job_e.get('num_slots', 1),
+            num_slots=job_e.get('params', {}).get('num_slots', 1),
             log_path=job_e.get('log_path'),
             time_path=job_e.get('time_path'),
             status_path=job_e.get('status_path'),
