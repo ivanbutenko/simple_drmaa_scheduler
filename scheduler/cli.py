@@ -49,7 +49,11 @@ def main():
 
     else:
         for b in batches:
-            print('Batch: {} ({} jobs)'.format(b.name, len(b.jobs)))
+            print('Batch: {name} ({jobs} jobs, sum of threads: {threads})'.format(
+                name=b.name,
+                jobs=len(b.jobs),
+                threads=sum(j.spec.num_slots for j in b.jobs)
+            ))
 
 
 if __name__ == '__main__':
