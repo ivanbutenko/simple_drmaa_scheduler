@@ -9,7 +9,7 @@ import drmaa
 from drmaa.const import JobControlAction
 from drmaa.errors import InvalidJobException, InternalException
 
-from executor.base import Executor
+from scheduler.executor.base import Executor
 from scheduler.job import Job, JobSpec
 
 logger = logging.getLogger(__name__)

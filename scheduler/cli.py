@@ -2,7 +2,7 @@ import argparse
 import logging
 import sys
 
-from executor.drmaa import DRMAAExecutor
+from scheduler.executor.drmaa import DRMAAExecutor
 from scheduler.parser import json
 from scheduler.scheduler import Scheduler
 

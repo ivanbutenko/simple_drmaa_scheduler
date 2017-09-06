@@ -3,7 +3,7 @@ from os import getcwd, makedirs
 from os.path import join, dirname
 from typing import List
 
-from executor.base import Executor
+from scheduler.executor.base import Executor
 from scheduler.job import Batch
 
 logger = logging.getLogger(__name__)

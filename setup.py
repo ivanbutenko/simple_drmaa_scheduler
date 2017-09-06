@@ -2,8 +2,8 @@ from setuptools import setup
 
 setup(
     name='simple_drmaa_scheduler',
-    version='0.0.3',
-    packages=['scheduler', 'scheduler.parser'],
+    version='0.0.4',
+    packages=['scheduler', 'scheduler.parser', 'scheduler.executor'],
     url='',
     license='',
     author='nikita',
