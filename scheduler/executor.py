@@ -150,7 +150,7 @@ class DRMAAExecutor:
                 except (drmaa.InternalException, Exception) as e:
                     # Dirty hack allowing to catch cancelled job in "queued" status
                     if 'code 24' in str(e):
-                        logger.warn("Cancelled job in 'queued' status: {}".format(e)) 
+                        logger.warning("Cancelled job in 'queued' status: {}".format(e))
                         class FakeRes:
                             hasExited = True
                             exitStatus = 42
