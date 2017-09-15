@@ -115,6 +115,7 @@ class DRMAAExecutor(Executor):
                             exitStatus = 42
                         res = FakeRes()
                     else:
+                        logger.warning('Unknown exception: {}: {}'.format(type(e), e))
                         continue
 
                 job.end_time = time.time()
