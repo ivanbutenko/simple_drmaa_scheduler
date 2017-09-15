@@ -1,14 +1,33 @@
 import argparse
 import logging
 import sys
+from typing import List
+from collections import Counter
 
 from scheduler.executor.drmaa import DRMAAExecutor
+from scheduler.job import Batch
 from scheduler.parser import json, sh
 from scheduler.scheduler import Scheduler
 from scheduler import version
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
+
+
+def _validate_batches(batches: List[Batch]):
+    batches_counts = Counter(
+        b.name for b in batches
+    ).most_common()
+
+    ok = True
+    for batch, count in batches_counts:
+        if count > 1:
+            sys.stderr.write('Batch "{}" occurred {} times\n'.format(
+                batch, count
+            ))
+            ok = False
+    if not ok:
+        exit(1)
 
 
 def main():
@@ -40,6 +59,8 @@ def main():
     else:
         raise Exception('Invalid parser_type: {}'.format(args.parser_type))
     f.close()
+
+    _validate_batches(batches)
 
     if not args.dry_run:
         executor = DRMAAExecutor(
