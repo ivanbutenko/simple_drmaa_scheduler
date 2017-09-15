@@ -3,7 +3,7 @@ import logging
 import sys
 
 from scheduler.executor.drmaa import DRMAAExecutor
-from scheduler.parser import json
+from scheduler.parser import json, sh
 from scheduler.scheduler import Scheduler
 from scheduler import version
 
@@ -13,7 +13,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('batch')
+    parser.add_argument('batch', nargs='?', default='-')
     parser.add_argument('--log-dir', '-l', default='log')
     parser.add_argument('--status-dir', '-s', default='status')
     parser.add_argument('--time-dir', '-T', default='time')
@@ -24,6 +24,7 @@ def main():
     parser.add_argument('-K', '--stop-on-first-error', action='store_true')
     parser.add_argument('-S', '--skip-already-done', action='store_true')
     parser.add_argument('--version', '-V', action='version', version="%(prog)s " + version.get_version())
+    parser.add_argument('--parser-type', '-P', choices=['json', 'sh'], default='json')
 
     args = parser.parse_args()
 
@@ -31,8 +32,13 @@ def main():
         f = sys.stdin
     else:
         f = open(args.batch)
-    batches = json.parse_config(f)
-    print('loaded json')
+
+    if args.parser_type == 'json':
+        batches = json.parse_config(f)
+    elif args.parser_type == 'sh':
+        batches = sh.parse_config(f)
+    else:
+        raise Exception('Invalid parser_type: {}'.format(args.parser_type))
     f.close()
 
     if not args.dry_run:
