@@ -84,6 +84,7 @@ class DRMAAExecutor(Executor):
     def shutdown(self):
         self._session.exit()
 
+    # TODO: move drmaa not specific code to base
     def wait_for_jobs(self):
         status_ok = True
         while True:
