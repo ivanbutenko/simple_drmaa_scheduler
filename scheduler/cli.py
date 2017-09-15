@@ -5,6 +5,7 @@ import sys
 from scheduler.executor.drmaa import DRMAAExecutor
 from scheduler.parser import json
 from scheduler.scheduler import Scheduler
+from scheduler import version
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
@@ -22,6 +23,7 @@ def main():
     parser.add_argument('--print-only', action='store_true')
     parser.add_argument('-K', '--stop-on-first-error', action='store_true')
     parser.add_argument('-S', '--skip-already-done', action='store_true')
+    parser.add_argument('--version', '-V', action='version', version="%(prog)s " + version.get_version())
 
     args = parser.parse_args()
 
