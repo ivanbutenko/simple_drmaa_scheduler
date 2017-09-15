@@ -71,7 +71,7 @@ class DRMAAExecutor(Executor):
             job.start_time = time.time()
         except (drmaa.InternalException,
                 drmaa.InvalidAttributeValueException) as e:
-            logger.warn('drmaa exception in _run: {}'.format(e))
+            logger.warning('drmaa exception in _run: {}'.format(e))
             return
 
         logger.info("Submitted job {name} (id: {id})".format(
