@@ -71,6 +71,7 @@ class DRMAAExecutor(Executor):
             job.start_time = time.time()
         except (drmaa.InternalException,
                 drmaa.InvalidAttributeValueException) as e:
+            logger.warn('drmaa exception in _run: {}'.format(e))
             return
 
         logger.info("Submitted job {name} (id: {id})".format(
@@ -106,7 +107,15 @@ class DRMAAExecutor(Executor):
                     self._active_jobs.append(job)
                     continue
                 except (drmaa.InternalException, Exception) as e:
-                    continue
+                    # Dirty hack allowing to catch cancelled job in "queued" status
+                    if 'code 24' in str(e):
+                        logger.warning("Cancelled job in 'queued' status: {}".format(e))
+                        class FakeRes:
+                            hasExited = True
+                            exitStatus = 42
+                        res = FakeRes()
+                    else:
+                        continue
 
                 job.end_time = time.time()
                 if res.hasExited and res.exitStatus == 0:
