@@ -1,4 +1,5 @@
 import logging
+import re
 import shutil
 import time
 from collections import deque
@@ -52,7 +53,10 @@ class DRMAAExecutor(Executor):
             jt.outputPath = ':'+spec.log_path
             jt.joinFiles = True
         if spec.name:
-            jt.jobName = spec.name
+            if re.match(r'^\d+', spec.name):
+                jt.jobName = 'j'+spec.name
+            else:
+                jt.jobName = spec.name
         if spec.work_dir:
             jt.workingDirectory = spec.work_dir
 
