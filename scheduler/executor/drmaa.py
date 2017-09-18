@@ -4,7 +4,7 @@ import shutil
 import time
 from collections import deque
 from os import makedirs
-from typing import List
+from typing import List, Deque
 
 import drmaa
 from drmaa.const import JobControlAction
@@ -23,7 +23,7 @@ class DRMAAExecutor(Executor):
         self._session.initialize()
         self._active_jobs = list()  # type: List[Job]
         self._stop_on_first_error = stop_on_first_error
-        self._job_queue = deque()
+        self._job_queue = deque()  # type: Deque[Job]
         self._max_jobs = max_jobs
         self._skip_alreagy_done = skip_already_done
 
@@ -95,14 +95,14 @@ class DRMAAExecutor(Executor):
             while len(self._job_queue) != 0:
                 if self._max_jobs is not None and len(self._active_jobs) >= self._max_jobs:
                     break
-                job = self._job_queue.popleft() # type: Job
+                job = self._job_queue.popleft()  # type: Job
                 if self._skip_alreagy_done and self._read_status(job) == self.JOB_STATUS_OK:
                     logger.info("Job {name} is already done".format(name=job.spec.name))
                     continue
                 self._run(job)
 
             active_jobs = self._active_jobs
-            self._active_jobs = list()  # type: List[Job]
+            self._active_jobs.clear()
             for job in active_jobs:
                 try:
                     res = self._session.wait(job.job_id,

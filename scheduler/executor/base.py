@@ -51,7 +51,7 @@ class Executor(metaclass=ABCMeta):
         logger.error("Job {name} (drmaa id: {d}) finished with error. Log file: {log}".format(
             name=job.spec.name,
             d=job.job_id,
-            log=job.spec.log_path
+            log=(job.spec.log_path or '').rstrip(':')
         ))
         args_str = " ".join([shlex.quote(arg) for arg in job.spec.args])
         full_command = "{command} {args}".format(
