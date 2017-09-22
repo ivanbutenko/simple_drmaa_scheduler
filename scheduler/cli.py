@@ -1,4 +1,5 @@
 import argparse
+import io
 import logging
 import sys
 from typing import List
@@ -42,7 +43,7 @@ def main():
     parser.add_argument('-K', '--stop-on-first-error', action='store_true')
     parser.add_argument('-S', '--skip-already-done', action='store_true')
     parser.add_argument('--version', '-V', action='version', version="%(prog)s " + version.get_version())
-    parser.add_argument('--parser-type', '-P', choices=['json', 'sh'], default='json')
+    parser.add_argument('--batch-format', '-f', choices=['json', 'sh'], default='json')
 
     args = parser.parse_args()
 
@@ -51,13 +52,15 @@ def main():
     else:
         f = open(args.batch)
 
-    if args.parser_type == 'json':
+    if args.batch_format == 'json':
         batches = json.parse_config(f)
-    elif args.parser_type == 'sh':
+    elif args.batch_format == 'sh':
         batches = sh.parse_config(f)
     else:
         raise Exception('Invalid parser_type: {}'.format(args.parser_type))
-    f.close()
+
+    if f is not sys.stdin:
+        f.close()
 
     _validate_batches(batches)
 
