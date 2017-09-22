@@ -29,6 +29,9 @@ def _job_to_args(batch: Batch, job_spec: JobSpec)->List[str]:
     if job_spec.num_slots:
         job_args.extend(('--threads', job_spec.num_slots))
 
+    if job_spec.log_path:
+        job_args.extend(('--log-path', job_spec.log_path))
+
     if job_spec.work_dir:
         job_args.extend(('--work-dir', job_spec.work_dir))
 
