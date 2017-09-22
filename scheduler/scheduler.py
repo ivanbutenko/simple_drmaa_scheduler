@@ -32,23 +32,23 @@ class Scheduler:
         logger.info('Executing batch: {} ({} jobs)'.format(batch.name, len(batch.jobs)))
 
         for i, job in enumerate(batch.jobs):
-            if not job.spec.name:
-                job.spec.name = '{}.{}.txt'.format(batch.name, i)
-            if not job.spec.status_path:
-                job.spec.status_path = join(self.status_dir, batch.name, job.spec.name)
+            if not job.name:
+                job.name = '{}.{}.txt'.format(batch.name, i)
+            if not job.status_path:
+                job.status_path = join(self.status_dir, batch.name, job.name)
 
-            if not job.spec.log_path:
-                job.spec.log_path = join(self.log_dir, batch.name, job.spec.name)
+            if not job.log_path:
+                job.log_path = join(self.log_dir, batch.name, job.name)
 
-            if not job.spec.time_path:
-                job.spec.time_path = join(self.time_dir, batch.name, job.spec.name+'.time')
+            if not job.time_path:
+                job.time_path = join(self.time_dir, batch.name, job.name+'.time')
 
-            if not job.spec.work_dir:
-                job.spec.work_dir = getcwd()
+            if not job.work_dir:
+                job.work_dir = getcwd()
 
-            makedirs(dirname(job.spec.status_path), exist_ok=True)
-            makedirs(dirname(job.spec.log_path), exist_ok=True)
-            makedirs(dirname(job.spec.time_path), exist_ok=True)
+            makedirs(dirname(job.status_path), exist_ok=True)
+            makedirs(dirname(job.log_path), exist_ok=True)
+            makedirs(dirname(job.time_path), exist_ok=True)
 
             executor.queue(job)
         res = executor.wait_for_jobs()

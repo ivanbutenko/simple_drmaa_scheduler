@@ -1,9 +1,9 @@
 import argparse
 from itertools import groupby
+from shlex import split, quote
 from typing import List, TextIO
-from shlex import split
 
-from scheduler.job import Batch, Job, JobSpec
+from scheduler.job import Batch, JobSpec
 
 
 def _init_parser()->argparse.ArgumentParser:
@@ -21,6 +21,41 @@ def _init_parser()->argparse.ArgumentParser:
     return parser
 
 
+def _job_to_args(batch: Batch, job_spec: JobSpec)->List[str]:
+    job_args = []
+    job_args.extend(('--name', job_spec.name))
+    job_args.extend(('--batch', batch.name))
+
+    if job_spec.num_slots:
+        job_args.extend(('--threads', job_spec.num_slots))
+
+    if job_spec.work_dir:
+        job_args.extend(('--work-dir', job_spec.work_dir))
+
+    if job_spec.status_path:
+        job_args.extend(('--status-path', job_spec.status_path))
+
+    if job_spec.time_path:
+        job_args.extend(('--time-path', job_spec.time_path))
+
+    job_args.append(job_spec.command)
+    job_args.extend(job_spec.args)
+
+    job_args = [
+        quote(str(arg))
+        for arg in job_args
+    ]
+    return job_args
+
+
+def _batches_to_args(batches: List[Batch])->List[List[str]]:
+    return [
+        _job_to_args(batch, job)
+        for batch in batches
+        for job in batch.jobs
+    ]
+
+
 def _parse_batch(batch_name: str, job_args_list: List[argparse.Namespace])->Batch:
     jobs = [
         _parse_job(
@@ -35,9 +70,8 @@ def _parse_batch(batch_name: str, job_args_list: List[argparse.Namespace])->Batc
     )
 
 
-def _parse_job(job_args, default_name: str)->Job:
-    return Job(
-        spec=JobSpec(
+def _parse_job(job_args, default_name: str)->JobSpec:
+    return JobSpec(
             command=job_args.command,
             args=job_args.arguments,
             name=job_args.name or default_name,
@@ -47,7 +81,6 @@ def _parse_job(job_args, default_name: str)->Job:
             status_path=job_args.status_path,
             log_path=job_args.log_path,
         )
-    )
 
 
 def parse_config(file: TextIO)->List[Batch]:
@@ -62,3 +95,8 @@ def parse_config(file: TextIO)->List[Batch]:
         for batch, group in groupby(job_args_list, lambda ja: ja.batch)
     ]
     return batches
+
+
+def write_config(f: TextIO, batches: List[Batch]):
+    for line in _batches_to_args(batches):
+        f.write(" ".join(line)+'\n')
