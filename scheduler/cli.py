@@ -4,7 +4,6 @@ import sys
 from typing import List
 from collections import Counter
 
-from scheduler.executor.drmaa import DRMAAExecutor
 from scheduler.job import Batch
 from scheduler.parser import json, sh
 from scheduler.scheduler import Scheduler
@@ -63,6 +62,7 @@ def main():
     _validate_batches(batches)
 
     if not args.dry_run:
+        from scheduler.executor.drmaa import DRMAAExecutor
         executor = DRMAAExecutor(
             max_jobs=args.max_jobs,
             stop_on_first_error=args.stop_on_first_error,
@@ -81,7 +81,7 @@ def main():
             print('Batch: {name} ({jobs} jobs, sum of threads: {threads})'.format(
                 name=b.name,
                 jobs=len(b.jobs),
-                threads=sum(j.spec.num_slots for j in b.jobs)
+                threads=sum(j.num_slots for j in b.jobs)
             ))
 
 
