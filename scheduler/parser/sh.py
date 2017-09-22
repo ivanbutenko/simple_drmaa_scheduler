@@ -16,7 +16,7 @@ def _init_parser()->argparse.ArgumentParser:
     parser.add_argument('--log-path')
     parser.add_argument('--threads', '-t', default=1, type=int)
     parser.add_argument('command')
-    parser.add_argument('arguments', nargs='*')
+    parser.add_argument('arguments', nargs=argparse.REMAINDER)
 
     return parser
 
