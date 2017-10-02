@@ -108,6 +108,7 @@ class DRMAAExecutor(Executor):
                     res = self._session.wait(job.job_id,
                                              drmaa.Session.TIMEOUT_NO_WAIT)
                     if not res.hasExited:
+                        self._active_jobs.append(job)
                         continue
                 except drmaa.ExitTimeoutException as e:
                     # job still active
