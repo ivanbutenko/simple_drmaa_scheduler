@@ -27,7 +27,7 @@ class Job:
                  spec: JobSpec,
                  start_time: int=None,
                  end_time: int=None,
-                 job_id: str=None,
+                 job_id: int=None,
                  ):
         self.job_id = job_id
         self.end_time = end_time

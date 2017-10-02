@@ -65,8 +65,16 @@ def main():
     _validate_batches(batches)
 
     if not args.dry_run:
-        from scheduler.executor.drmaa import DRMAAExecutor
-        executor = DRMAAExecutor(
+        # from scheduler.executor.drmaa import DRMAAExecutor
+        # executor = DRMAAExecutor(
+        #     max_jobs=args.max_jobs,
+        #     stop_on_first_error=args.stop_on_first_error,
+        #     skip_already_done=args.skip_already_done,
+        #
+        # )
+        from scheduler.executor.local import LocalExecutor
+
+        executor = LocalExecutor(
             max_jobs=args.max_jobs,
             stop_on_first_error=args.stop_on_first_error,
             skip_already_done=args.skip_already_done,

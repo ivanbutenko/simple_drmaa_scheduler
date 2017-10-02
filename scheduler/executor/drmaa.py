@@ -2,43 +2,50 @@ import logging
 import re
 import shutil
 import time
-from collections import deque
 from os import makedirs
-from typing import List
 
 import drmaa
 from drmaa.const import JobControlAction
 from drmaa.errors import InvalidJobException, InternalException
 
-from scheduler.executor.base import Executor, _write_status, _print_job_error, _write_time, _read_status
+from scheduler.executor.base import Executor
 from scheduler.job import Job, JobSpec
 
 logger = logging.getLogger(__name__)
 
 
 class DRMAAExecutor(Executor):
-    class FakeErrorRes:
-        hasExited = True
-        exitStatus = 42
-
-    def __init__(self, stop_on_first_error: bool=False, max_jobs: int=None, skip_already_done=False):
+    def __init__(self, stop_on_first_error: bool = False, max_jobs: int = None, skip_already_done=False):
+        super().__init__(stop_on_first_error, max_jobs, skip_already_done)
         self._session = drmaa.Session()
         self._drmaa_log_dir = ''
         self._session.initialize()
-        self._active_jobs = list()  # type: List[Job]
-        self._stop_on_first_error = stop_on_first_error
-        self._job_queue = deque()
-        self._max_jobs = max_jobs
-        self._skip_alreagy_done = skip_already_done
 
-    def cancel(self):
-        logger.warning("Cancelling {} jobs".format(len(self._active_jobs)))
-        for job in self._active_jobs:
-            try:
-                self._session.control(job.job_id, JobControlAction.TERMINATE)
-            except (InvalidJobException, InternalException):
-                # FIXME: This is common - logging a warning would probably confuse the user.
-                pass
+    def _job_status(self, job: Job) -> Executor.JobStatus:
+        try:
+            res = self._session.wait(job.job_id,
+                                     drmaa.Session.TIMEOUT_NO_WAIT)
+            if not res.hasExited:
+                return Executor.JobStatus(exit_status=1, has_exited=False, job=job)
+            else:
+                return Executor.JobStatus(exit_status=res.exitStatus, has_exited=True, job=job)
+        except drmaa.ExitTimeoutException as e:
+            # job still active
+            return Executor.JobStatus(exit_status=1, has_exited=False, job=job)
+        except Exception as e:
+            # Dirty hack allowing to catch cancelled job in "queued" status
+            if 'code 24' in str(e):
+                logger.warning("Cancelled job in 'queued' status: {}".format(e))
+            else:
+                logger.warning('Unknown exception: {}: {}'.format(type(e), e))
+                return Executor.JobStatus(exit_status=42, has_exited=True, job=job)
+
+    def _cancel_job(self, job: Job):
+        try:
+            self._session.control(job.job_id, JobControlAction.TERMINATE)
+        except (InvalidJobException, InternalException):
+            # FIXME: This is common - logging a warning would probably confuse the user.
+            pass
 
     def _create_template(self, spec: JobSpec)->drmaa.JobTemplate:
         jt = self._session.createJobTemplate()
@@ -66,31 +73,22 @@ class DRMAAExecutor(Executor):
 
         return jt
 
-    def queue(self, job_spec: JobSpec):
-        if self._skip_alreagy_done and _read_status(job_spec) == self.JOB_STATUS_OK:
-            logger.info("Job {name} is already done".format(name=job_spec.name))
-            return
-        self._job_queue.append(Job(spec=job_spec))
-
-    def _run(self, job: Job):
+    def _submit(self, job_spec: JobSpec)->Job:
         if self._drmaa_log_dir:
             makedirs(self._drmaa_log_dir)
 
         try:
-            jt = self._create_template(job.spec)
-            job.job_id = self._session.runJob(jt)
-            job.start_time = time.time()
+            jt = self._create_template(job_spec)
+
+            job_id = self._session.runJob(jt)
+            job = Job(spec=job_spec, job_id=job_id)
+            self._session.deleteJobTemplate(jt)
+            return job
         except (drmaa.InternalException,
                 drmaa.InvalidAttributeValueException) as e:
-            logger.warning('drmaa exception in _run: {}'.format(e))
-            return
-
-        logger.info("Submitted job {name} (id: {id})".format(
-            id=job.job_id,
-            name=job.spec.name,
-        ))
-        self._session.deleteJobTemplate(jt)
-        self._active_jobs.append(job)
+            logger.error('drmaa exception in _run: {}'.format(e))
+            # FIXME handle drmaa exceptions
+            return None
 
     def shutdown(self):
         self._session.exit()
@@ -103,7 +101,7 @@ class DRMAAExecutor(Executor):
                 if self._max_jobs is not None and len(self._active_jobs) >= self._max_jobs:
                     break
                 job = self._job_queue.popleft()  # type: Job
-                self._run(job)
+                self._submit(job)
 
             active_jobs = list(self._active_jobs)
             self._active_jobs.clear()
