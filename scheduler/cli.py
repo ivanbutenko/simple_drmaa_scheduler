@@ -19,14 +19,18 @@ def _validate_batches(batches: List[Batch]):
         b.name for b in batches
     ).most_common()
 
-    ok = True
-    for batch, count in batches_counts:
-        if count > 1:
-            sys.stderr.write('Batch "{}" occurred {} times\n'.format(
-                batch, count
-            ))
-            ok = False
-    if not ok:
+    invalid_batches = [
+        batch
+        for batch, count in batches_counts
+        if count > 1
+    ]
+
+    for batch in invalid_batches:
+        sys.stderr.write('Batch "{}" occurred more tan 1 time\n'.format(
+            batch
+        ))
+
+    if invalid_batches:
         exit(1)
 
 
