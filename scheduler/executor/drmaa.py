@@ -35,9 +35,9 @@ class DRMAAExecutor(Executor):
         except Exception as e:
             # Dirty hack allowing to catch cancelled job in "queued" status
             if 'code 24' in str(e):
-                logger.warning("Cancelled job in 'queued' status: {}".format(e))
+                logger.error("Cancelled job in 'queued' status: {}".format(e))
             else:
-                logger.warning('Unknown exception: {}: {}'.format(type(e), e))
+                logger.error('Unknown exception: {}: {}'.format(type(e), e))
             return Executor.JobStatus(exit_status=42, has_exited=True, job=job)
 
     def _cancel_job(self, job: Job):
