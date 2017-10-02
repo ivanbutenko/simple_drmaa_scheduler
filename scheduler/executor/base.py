@@ -1,9 +1,10 @@
 import time
 from abc import ABCMeta, abstractmethod
 from collections import deque
-from typing import List
+from math import inf
+from typing import List, Dict
 
-from scheduler.executor.util import print_job_error, write_time, read_status, write_status
+from scheduler.executor.util import print_job_error, write_time, read_status, write_status, print_job_ok
 from scheduler.job import Job, JobSpec
 import logging
 logger = logging.getLogger(__name__)
@@ -20,10 +21,10 @@ class Executor(metaclass=ABCMeta):
             self.exit_status = exit_status
 
     def __init__(self, stop_on_first_error: bool=False, max_jobs: int=None, skip_already_done=False):
-        self._active_jobs = list()  # type: List[Job]
+        self._active_jobs = dict()  # type: Dict[int, Job]
         self._stop_on_first_error = stop_on_first_error
-        self._job_queue = deque()
-        self._max_jobs = max_jobs
+        self._queued_jobs = deque()
+        self._max_jobs = max_jobs or inf
         self._skip_alreagy_done = skip_already_done
 
     @abstractmethod
@@ -44,61 +45,59 @@ class Executor(metaclass=ABCMeta):
 
     def cancel(self):
         logger.warning("Cancelling {} jobs".format(len(self._active_jobs)))
-        for job in self._active_jobs:
+        for job in self._active_jobs.values():
             self._cancel_job(job)
 
     def queue(self, job_spec: JobSpec):
         if self._skip_alreagy_done and read_status(job_spec) == self.JOB_STATUS_OK:
             logger.info("Job {name} is already done".format(name=job_spec.name))
             return
-        self._job_queue.append(job_spec)
+        self._queued_jobs.append(job_spec)
+
+    def _submit_new_jobs(self):
+        can_take = self._max_jobs - len(self._active_jobs)
+        to_submit_count = min(can_take, len(self._queued_jobs))
+        to_submit = (
+            self._queued_jobs.popleft()
+            for _ in range(to_submit_count)
+        )
+        for job_spec in to_submit:
+            job = self._submit(job_spec)
+            self._active_jobs[job.job_id] = job
+            job.start_time = time.time()
+            logger.info("Submitted job {name} (id: {id})".format(
+                id=job.job_id,
+                name=job_spec.name,
+            ))
 
     # TODO: move drmaa not specific code to base
     def wait_for_jobs(self):
         status_ok = True
         while True:
-            while len(self._job_queue) != 0:
-                if self._max_jobs is not None and len(self._active_jobs) >= self._max_jobs:
-                    break
-                job_spec = self._job_queue.popleft()  # type: JobSpec
-                job = self._submit(job_spec)
-                self._active_jobs.append(job)
-                job.start_time = time.time()
-                logger.info("Submitted job {name} (id: {id})".format(
-                    id=job.job_id,
-                    name=job_spec.name,
-                ))
+            self._submit_new_jobs()
 
-            active_jobs = list(self._active_jobs)
-            self._active_jobs.clear()
-            for job in active_jobs:
+            for job_id, job in list(self._active_jobs.items()):
                 status = self._job_status(job)
                 if not status.has_exited:
-                    self._active_jobs.append(job)
                     continue
+                del self._active_jobs[job_id]
 
                 job.end_time = time.time()
                 if status.exit_status == 0:
-                    logger.info("Job {name} (id: {id}) successfully finished, time: {time} s.".format(
-                        name=job.spec.name,
-                        id=job.job_id,
-                        time=(job.end_time - job.start_time)
-                    ))
+                    print_job_ok(job)
                     write_status(job, self.JOB_STATUS_OK)
                     write_time(job)
                 else:
-                    write_status(job, self.JOB_STATUS_ERROR)
                     print_job_error(job)
+                    write_status(job, self.JOB_STATUS_ERROR)
                     if self._stop_on_first_error:
                         return False
                     else:
                         status_ok = False
                 logger.info('{} jobs left'.format(
-                    len(active_jobs) + len(self._job_queue)
+                    len(self._active_jobs) + len(self._queued_jobs)
                 ))
             if not self._active_jobs:
                 break
             time.sleep(1)
         return status_ok
-
-

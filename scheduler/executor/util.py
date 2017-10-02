@@ -29,6 +29,14 @@ def print_job_error(job: Job):
     ))
 
 
+def print_job_ok(job: Job):
+    logger.info("Job {name} (id: {id}) successfully finished, time: {time} s.".format(
+        name=job.spec.name,
+        id=job.job_id,
+        time=(job.end_time - job.start_time)
+    ))
+
+
 def write_time(job: Job):
     with open(job.spec.time_path, 'w') as f:
         f.write('{}\n'.format(job.end_time - job.start_time))

@@ -97,10 +97,10 @@ class DRMAAExecutor(Executor):
     def wait_for_jobs(self):
         status_ok = True
         while True:
-            while len(self._job_queue) != 0:
+            while len(self._queued_jobs) != 0:
                 if self._max_jobs is not None and len(self._active_jobs) >= self._max_jobs:
                     break
-                job = self._job_queue.popleft()  # type: Job
+                job = self._queued_jobs.popleft()  # type: Job
                 self._submit(job)
 
             active_jobs = list(self._active_jobs)
@@ -141,7 +141,7 @@ class DRMAAExecutor(Executor):
                     else:
                         status_ok = False
                 logger.info('{} jobs left'.format(
-                    len(active_jobs) + len(self._job_queue)
+                    len(active_jobs) + len(self._queued_jobs)
                 ))
             if not self._active_jobs:
                 break
