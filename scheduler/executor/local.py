@@ -14,6 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class LocalExecutor(Executor):
+    """
+    Only for developing and debugging
+    """
     def __init__(self, stop_on_first_error: bool=False, max_jobs: int=None, skip_already_done=False):
         super().__init__(stop_on_first_error, max_jobs, skip_already_done)
         self._executor_thread = ExecutorThread()
