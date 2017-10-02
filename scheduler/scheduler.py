@@ -2,7 +2,7 @@ import csv
 import hashlib
 import logging
 from os import getcwd, makedirs, stat
-from os.path import join, dirname
+from os.path import join, dirname, realpath
 from subprocess import check_output
 from typing import List
 
@@ -47,6 +47,7 @@ class Scheduler:
                 # res = self._run_batch(executor, batch)
                 res = True
                 dir_structure_file = 'struct.{}.tsv'.format(batch.name)
+                print(realpath(dir_structure_file))
                 self._write_dir_structure(dir_structure_file)
                 if not res:
                     logger.warning("Stopping jobs because of error")
