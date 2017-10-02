@@ -1,6 +1,9 @@
+import csv
+import hashlib
 import logging
-from os import getcwd, makedirs
+from os import getcwd, makedirs, stat
 from os.path import join, dirname
+from subprocess import check_output
 from typing import List
 
 from scheduler.executor.base import Executor
@@ -15,10 +18,36 @@ class Scheduler:
         self.status_dir = status_dir
         self.log_dir = log_dir
 
+    def _write_dir_structure(self, out_file):
+        def md5(fname):
+            hash_md5 = hashlib.md5()
+            with open(fname, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_md5.update(chunk)
+            return hash_md5.hexdigest()
+
+        def stat_file(fname):
+            file_md5 = md5(fname)
+            s = stat(fname)
+            return fname, file_md5, s.st_size, s.st_atime, s.st_mtime
+
+        files = [
+            stat_file(f)
+            for f in check_output(['find', '.', '-type', 'f']).decode().split('\n')
+            if f and f not in {'.'}
+        ]
+
+        with open(out_file, 'w') as f:
+            writer = csv.writer(f, delimiter='\t')
+            writer.writerows(files)
+
     def run_batches(self, executor: Executor, batches: List[Batch]):
         for batch in batches:
             try:
-                res = self._run_batch(executor, batch)
+                # res = self._run_batch(executor, batch)
+                res = True
+                dir_structure_file = 'struct.{}.tsv'.format(batch.name)
+                self._write_dir_structure(dir_structure_file)
                 if not res:
                     logger.warning("Stopping jobs because of error")
                     executor.cancel()
