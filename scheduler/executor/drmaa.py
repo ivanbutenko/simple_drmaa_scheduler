@@ -10,13 +10,17 @@ import drmaa
 from drmaa.const import JobControlAction
 from drmaa.errors import InvalidJobException, InternalException
 
-from scheduler.executor.base import Executor, _write_status, _print_job_error, _write_time, _read_status
+from scheduler.executor.base import Executor
 from scheduler.job import Job, JobSpec
 
 logger = logging.getLogger(__name__)
 
 
 class DRMAAExecutor(Executor):
+    class FakeErrorRes:
+        hasExited = True
+        exitStatus = 42
+
     def __init__(self, stop_on_first_error: bool=False, max_jobs: int=None, skip_already_done=False):
         self._session = drmaa.Session()
         self._drmaa_log_dir = ''
@@ -62,8 +66,8 @@ class DRMAAExecutor(Executor):
 
         return jt
 
-    def queue(self, job_spec: JobSpec):
-        self._job_queue.append(Job(spec=job_spec))
+    def queue(self, job: Job):
+        self._job_queue.append(job)
 
     def _run(self, job: Job):
         if self._drmaa_log_dir:
@@ -96,7 +100,7 @@ class DRMAAExecutor(Executor):
                 if self._max_jobs is not None and len(self._active_jobs) >= self._max_jobs:
                     break
                 job = self._job_queue.popleft()  # type: Job
-                if self._skip_alreagy_done and _read_status(job) == self.JOB_STATUS_OK:
+                if self._skip_alreagy_done and self._read_status(job) == self.JOB_STATUS_OK:
                     logger.info("Job {name} is already done".format(name=job.spec.name))
                     continue
                 self._run(job)
@@ -108,22 +112,19 @@ class DRMAAExecutor(Executor):
                     res = self._session.wait(job.job_id,
                                              drmaa.Session.TIMEOUT_NO_WAIT)
                     if not res.hasExited:
+                        self._active_jobs.append(job)
                         continue
                 except drmaa.ExitTimeoutException as e:
                     # job still active
                     self._active_jobs.append(job)
                     continue
-                except (drmaa.InternalException, Exception) as e:
+                except Exception as e:
                     # Dirty hack allowing to catch cancelled job in "queued" status
                     if 'code 24' in str(e):
                         logger.warning("Cancelled job in 'queued' status: {}".format(e))
-                        class FakeRes:
-                            hasExited = True
-                            exitStatus = 42
-                        res = FakeRes()
                     else:
                         logger.warning('Unknown exception: {}: {}'.format(type(e), e))
-                        continue
+                    res = DRMAAExecutor.FakeErrorRes()
 
                 job.end_time = time.time()
                 if res.exitStatus == 0:
@@ -132,12 +133,11 @@ class DRMAAExecutor(Executor):
                         id=job.job_id,
                         time=(job.end_time - job.start_time)
                     ))
-                    _write_status(job, self.JOB_STATUS_OK)
-                    _write_time(job)
+                    self._write_status(job, self.JOB_STATUS_OK)
+                    self._write_time(job)
                 else:
-                    print(res.exitStatus, res.hasExited)
-                    _write_status(job, self.JOB_STATUS_ERROR)
-                    _print_job_error(job)
+                    self._write_status(job, self.JOB_STATUS_ERROR)
+                    self._print_job_error(job)
                     if self._stop_on_first_error:
                         return False
                     else:
