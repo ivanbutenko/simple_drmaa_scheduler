@@ -43,6 +43,7 @@ def main():
     parser.add_argument('-S', '--skip-already-done', action='store_true')
     parser.add_argument('--version', '-V', action='version', version="%(prog)s " + version.get_version())
     parser.add_argument('--batch-format', '-f', choices=['json', 'sh'], default='json')
+    parser.add_argument('--executor', '-e', choices=['drmaa', 'local'], default='drmaa')
 
     args = parser.parse_args()
 
@@ -63,36 +64,39 @@ def main():
 
     _validate_batches(batches)
 
-    if not args.dry_run:
-        # from scheduler.executor.drmaa import DRMAAExecutor
-        # executor = DRMAAExecutor(
-        #     max_jobs=args.max_jobs,
-        #     stop_on_first_error=args.stop_on_first_error,
-        #     skip_already_done=args.skip_already_done,
-        #
-        # )
-        from scheduler.executor.local import LocalExecutor
-
-        executor = LocalExecutor(
-            max_jobs=args.max_jobs,
-            stop_on_first_error=args.stop_on_first_error,
-            skip_already_done=args.skip_already_done,
-
-        )
-        scheduler = Scheduler(
-            log_dir=args.log_dir,
-            status_dir=args.status_dir,
-            time_dir=args.time_dir,
-        )
-        scheduler.run_batches(executor, batches)
-
-    else:
+    if args.dry_run:
         for b in batches:
             print('Batch: {name} ({jobs} jobs, sum of threads: {threads})'.format(
                 name=b.name,
                 jobs=len(b.jobs),
                 threads=sum(j.num_slots for j in b.jobs)
             ))
+        return
+    if args.executor == 'drmaa':
+        from scheduler.executor.drmaa import DRMAAExecutor
+        executor = DRMAAExecutor(
+            max_jobs=args.max_jobs,
+            stop_on_first_error=args.stop_on_first_error,
+            skip_already_done=args.skip_already_done,
+
+        )
+    elif args.executor == 'local':
+        from scheduler.executor.local import LocalExecutor
+        executor = LocalExecutor(
+            max_jobs=args.max_jobs,
+            stop_on_first_error=args.stop_on_first_error,
+            skip_already_done=args.skip_already_done,
+
+        )
+    else:
+        raise ValueError('Invalid executor')
+
+    scheduler = Scheduler(
+        log_dir=args.log_dir,
+        status_dir=args.status_dir,
+        time_dir=args.time_dir,
+    )
+    scheduler.run_batches(executor, batches)
 
 
 if __name__ == '__main__':
