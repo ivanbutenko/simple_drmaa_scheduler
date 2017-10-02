@@ -43,9 +43,9 @@ class DRMAAExecutor(Executor):
     def _cancel_job(self, job: Job):
         try:
             self._session.control(job.job_id, JobControlAction.TERMINATE)
-        except (InvalidJobException, InternalException):
+        except (InvalidJobException, InternalException) as e:
             # FIXME: This is common - logging a warning would probably confuse the user.
-            pass
+            logger.error('DRMAA exception: {}: {}'.format(type(e), e))
 
     def _create_template(self, spec: JobSpec)->drmaa.JobTemplate:
         jt = self._session.createJobTemplate()
