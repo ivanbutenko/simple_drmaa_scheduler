@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 class DRMAAExecutor(Executor):
+    class FakeErrorRes:
+        hasExited = True
+        exitStatus = 42
+
     def __init__(self, stop_on_first_error: bool=False, max_jobs: int=None, skip_already_done=False):
         self._session = drmaa.Session()
         self._drmaa_log_dir = ''
@@ -114,17 +118,13 @@ class DRMAAExecutor(Executor):
                     # job still active
                     self._active_jobs.append(job)
                     continue
-                except (drmaa.InternalException, Exception) as e:
+                except Exception as e:
                     # Dirty hack allowing to catch cancelled job in "queued" status
                     if 'code 24' in str(e):
                         logger.warning("Cancelled job in 'queued' status: {}".format(e))
-                        class FakeRes:
-                            hasExited = True
-                            exitStatus = 42
-                        res = FakeRes()
                     else:
                         logger.warning('Unknown exception: {}: {}'.format(type(e), e))
-                        continue
+                    res = DRMAAExecutor.FakeErrorRes()
 
                 job.end_time = time.time()
                 if res.exitStatus == 0:
