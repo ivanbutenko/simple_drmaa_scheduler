@@ -10,7 +10,7 @@ import drmaa
 from drmaa.const import JobControlAction
 from drmaa.errors import InvalidJobException, InternalException
 
-from scheduler.executor.base import Executor
+from scheduler.executor.base import Executor, _write_status, _print_job_error, _write_time, _read_status
 from scheduler.job import Job, JobSpec
 
 logger = logging.getLogger(__name__)
@@ -66,8 +66,8 @@ class DRMAAExecutor(Executor):
 
         return jt
 
-    def queue(self, job: Job):
-        self._job_queue.append(job)
+    def queue(self, job_spec: JobSpec):
+        self._job_queue.append(Job(spec=job_spec))
 
     def _run(self, job: Job):
         if self._drmaa_log_dir:
@@ -100,7 +100,7 @@ class DRMAAExecutor(Executor):
                 if self._max_jobs is not None and len(self._active_jobs) >= self._max_jobs:
                     break
                 job = self._job_queue.popleft()  # type: Job
-                if self._skip_alreagy_done and self._read_status(job) == self.JOB_STATUS_OK:
+                if self._skip_alreagy_done and _read_status(job) == self.JOB_STATUS_OK:
                     logger.info("Job {name} is already done".format(name=job.spec.name))
                     continue
                 self._run(job)
@@ -133,11 +133,11 @@ class DRMAAExecutor(Executor):
                         id=job.job_id,
                         time=(job.end_time - job.start_time)
                     ))
-                    self._write_status(job, self.JOB_STATUS_OK)
-                    self._write_time(job)
+                    _write_status(job, self.JOB_STATUS_OK)
+                    _write_time(job)
                 else:
-                    self._write_status(job, self.JOB_STATUS_ERROR)
-                    self._print_job_error(job)
+                    _write_status(job, self.JOB_STATUS_ERROR)
+                    _print_job_error(job)
                     if self._stop_on_first_error:
                         return False
                     else:
