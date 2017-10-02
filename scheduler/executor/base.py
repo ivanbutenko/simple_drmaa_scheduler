@@ -58,10 +58,10 @@ def _write_time(job: Job):
         f.write('{}\n'.format(job.end_time - job.start_time))
 
 
-def _read_status(job: Job)->str:
-    if not exists(job.spec.status_path):
+def _read_status(job_spec: JobSpec)->str:
+    if not exists(job_spec.status_path):
         return ''
-    with open(job.spec.status_path) as f:
+    with open(job_spec.status_path) as f:
         return f.read()
 
 

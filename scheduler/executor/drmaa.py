@@ -67,6 +67,9 @@ class DRMAAExecutor(Executor):
         return jt
 
     def queue(self, job_spec: JobSpec):
+        if self._skip_alreagy_done and _read_status(job_spec) == self.JOB_STATUS_OK:
+            logger.info("Job {name} is already done".format(name=job_spec.name))
+            return
         self._job_queue.append(Job(spec=job_spec))
 
     def _run(self, job: Job):
@@ -100,9 +103,6 @@ class DRMAAExecutor(Executor):
                 if self._max_jobs is not None and len(self._active_jobs) >= self._max_jobs:
                     break
                 job = self._job_queue.popleft()  # type: Job
-                if self._skip_alreagy_done and _read_status(job) == self.JOB_STATUS_OK:
-                    logger.info("Job {name} is already done".format(name=job.spec.name))
-                    continue
                 self._run(job)
 
             active_jobs = list(self._active_jobs)
