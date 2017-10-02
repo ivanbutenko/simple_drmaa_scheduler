@@ -133,6 +133,7 @@ class DRMAAExecutor(Executor):
                     _write_status(job, self.JOB_STATUS_OK)
                     _write_time(job)
                 else:
+                    print(res.exitStatus, res.hasExited)
                     _write_status(job, self.JOB_STATUS_ERROR)
                     _print_job_error(job)
                     if self._stop_on_first_error:
