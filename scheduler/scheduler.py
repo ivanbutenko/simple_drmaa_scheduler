@@ -44,8 +44,7 @@ class Scheduler:
     def run_batches(self, executor: Executor, batches: List[Batch]):
         for batch in batches:
             try:
-                # res = self._run_batch(executor, batch)
-                res = True
+                res = self._run_batch(executor, batch)
                 dir_structure_file = 'struct.{}.tsv'.format(batch.name)
                 print(realpath(dir_structure_file))
                 self._write_dir_structure(dir_structure_file)
