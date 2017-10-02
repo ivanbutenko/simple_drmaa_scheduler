@@ -39,7 +39,6 @@ def main():
     parser.add_argument('-j', '--max-jobs', type=int)
 
     parser.add_argument('-d', '--dry-run', action='store_true')
-    parser.add_argument('--print-only', action='store_true')
     parser.add_argument('-K', '--stop-on-first-error', action='store_true')
     parser.add_argument('-S', '--skip-already-done', action='store_true')
     parser.add_argument('--version', '-V', action='version', version="%(prog)s " + version.get_version())
