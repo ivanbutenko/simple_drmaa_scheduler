@@ -4,7 +4,7 @@ import shutil
 import time
 from collections import deque
 from os import makedirs
-from typing import List, Deque
+from typing import List
 
 import drmaa
 from drmaa.const import JobControlAction
@@ -23,7 +23,7 @@ class DRMAAExecutor(Executor):
         self._session.initialize()
         self._active_jobs = list()  # type: List[Job]
         self._stop_on_first_error = stop_on_first_error
-        self._job_queue = deque()  # type: Deque[Job]
+        self._job_queue = deque()
         self._max_jobs = max_jobs
         self._skip_alreagy_done = skip_already_done
 
