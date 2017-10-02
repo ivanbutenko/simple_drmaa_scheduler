@@ -101,7 +101,7 @@ class DRMAAExecutor(Executor):
                     continue
                 self._run(job)
 
-            active_jobs = self._active_jobs
+            active_jobs = list(self._active_jobs)
             self._active_jobs.clear()
             for job in active_jobs:
                 try:
