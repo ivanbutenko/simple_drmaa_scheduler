@@ -107,6 +107,8 @@ class DRMAAExecutor(Executor):
                 try:
                     res = self._session.wait(job.job_id,
                                              drmaa.Session.TIMEOUT_NO_WAIT)
+                    if not res.hasExited:
+                        continue
                 except drmaa.ExitTimeoutException as e:
                     # job still active
                     self._active_jobs.append(job)
@@ -124,7 +126,7 @@ class DRMAAExecutor(Executor):
                         continue
 
                 job.end_time = time.time()
-                if res.hasExited and res.exitStatus == 0:
+                if res.exitStatus == 0:
                     logger.info("Job {name} (id: {id}) successfully finished, time: {time} s.".format(
                         name=job.spec.name,
                         id=job.job_id,
