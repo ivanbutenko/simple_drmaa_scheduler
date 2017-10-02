@@ -38,7 +38,7 @@ class DRMAAExecutor(Executor):
                 logger.warning("Cancelled job in 'queued' status: {}".format(e))
             else:
                 logger.warning('Unknown exception: {}: {}'.format(type(e), e))
-                return Executor.JobStatus(exit_status=42, has_exited=True, job=job)
+            return Executor.JobStatus(exit_status=42, has_exited=True, job=job)
 
     def _cancel_job(self, job: Job):
         try:
