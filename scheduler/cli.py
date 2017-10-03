@@ -1,14 +1,13 @@
 import argparse
-import io
 import logging
 import sys
-from typing import List
 from collections import Counter
+from typing import List
 
+from scheduler import version
 from scheduler.job import Batch
 from scheduler.parser import json, sh
 from scheduler.scheduler import Scheduler
-from scheduler import version
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)

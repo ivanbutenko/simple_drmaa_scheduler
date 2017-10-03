@@ -1,12 +1,13 @@
+import logging
 import time
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from math import inf
-from typing import List, Dict
+from typing import Dict
 
 from scheduler.executor.util import print_job_error, write_time, read_status, write_status, print_job_ok
 from scheduler.job import Job, JobSpec
-import logging
+
 logger = logging.getLogger(__name__)
 
 
