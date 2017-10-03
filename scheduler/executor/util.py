@@ -50,7 +50,7 @@ def read_status(job_spec: JobSpec)->str:
     if not exists(job_spec.status_path):
         return ''
     with open(job_spec.status_path) as f:
-        return f.read()
+        return f.read().strip()
 
 
 def write_status(job: Job, status: str):
