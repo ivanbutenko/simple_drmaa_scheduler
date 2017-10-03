@@ -1,7 +1,6 @@
 import logging
 import re
 import shutil
-import time
 from os import makedirs
 
 import drmaa
@@ -53,11 +52,11 @@ class DRMAAExecutor(Executor):
         jt.args = spec.args
 
         if spec.num_slots > 1:
-            # TODO: remove logger.info below
-            logger.info('Job {name} requested {n} slots'.format(
+            logger.debug('Job {name} requested {n} slots'.format(
                 name=spec.name,
                 n=spec.num_slots,
             ))
+            # TODO: add support non SGE engines
             jt.nativeSpecification = "-pe make {}".format(spec.num_slots)
 
         if spec.log_path:
@@ -86,7 +85,7 @@ class DRMAAExecutor(Executor):
             return job
         except (drmaa.InternalException,
                 drmaa.InvalidAttributeValueException) as e:
-            logger.error('drmaa exception in _run: {}'.format(e))
+            logger.error('drmaa exception in _submit: {}'.format(e))
             # FIXME handle drmaa exceptions
             return None
 
