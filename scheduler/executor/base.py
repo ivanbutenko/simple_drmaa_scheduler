@@ -3,7 +3,7 @@ import time
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from math import inf
-from typing import Dict
+from typing import Dict, Optional
 
 from scheduler.executor.util import print_job_error, write_time, read_status, write_status, print_job_ok
 from scheduler.job import Job, JobSpec
@@ -16,7 +16,7 @@ class Executor(metaclass=ABCMeta):
     JOB_STATUS_ERROR = 'error'
 
     class JobStatus:
-        def __init__(self, has_exited: bool, exit_status: int, job: Job):
+        def __init__(self, has_exited: bool, exit_status: Optional[int], job: Job):
             self.job = job
             self.has_exited = has_exited
             self.exit_status = exit_status

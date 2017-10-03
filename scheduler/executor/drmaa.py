@@ -21,23 +21,30 @@ class DRMAAExecutor(Executor):
         self._session.initialize()
 
     def _job_status(self, job: Job) -> Executor.JobStatus:
+        has_exited = False
+        exit_status = None
         try:
             res = self._session.wait(job.job_id,
                                      drmaa.Session.TIMEOUT_NO_WAIT)
-            if not res.hasExited:
-                return Executor.JobStatus(exit_status=1, has_exited=False, job=job)
-            else:
-                return Executor.JobStatus(exit_status=res.exitStatus, has_exited=True, job=job)
-        except drmaa.ExitTimeoutException as e:
+            if res.hasExited:
+                has_exited = True
+                exit_status = res.exitStatus
+        except drmaa.ExitTimeoutException:
             # job still active
-            return Executor.JobStatus(exit_status=1, has_exited=False, job=job)
+            pass
         except Exception as e:
             # Dirty hack allowing to catch cancelled job in "queued" status
             if 'code 24' in str(e):
                 logger.error("Cancelled job in 'queued' status: {}".format(e))
             else:
                 logger.error('Unknown exception: {}: {}'.format(type(e), e))
-            return Executor.JobStatus(exit_status=42, has_exited=True, job=job)
+            exit_status = 42
+            has_exited = True
+        return Executor.JobStatus(
+            exit_status=exit_status,
+            has_exited=has_exited,
+            job=job
+        )
 
     def _cancel_job(self, job: Job):
         try:
