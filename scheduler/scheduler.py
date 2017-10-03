@@ -1,7 +1,12 @@
 import logging
 from os import getcwd, makedirs
 from os.path import join, dirname
+from time import time
 from typing import List
+
+import math
+
+import datetime
 
 from scheduler.executor.base import Executor
 from scheduler.job import Batch
@@ -17,6 +22,7 @@ class Scheduler:
 
     def run_batches(self, executor: Executor, batches: List[Batch]):
         for batch in batches:
+            start_time = time()
             try:
                 res = self._run_batch(executor, batch)
                 if not res:
@@ -26,6 +32,12 @@ class Scheduler:
             except KeyboardInterrupt:
                 executor.cancel()
                 break
+            finally:
+                end_time = time()
+                logger.info('Batch {batch} done in {time}'.format(
+                    batch=batch.name,
+                    time=str(datetime.timedelta(seconds=math.trunc(end_time - start_time))),
+                ))
         executor.shutdown()
 
     def _run_batch(self, executor: Executor, batch: Batch):
@@ -52,7 +64,6 @@ class Scheduler:
 
             executor.queue(job)
         res = executor.wait_for_jobs()
-        logger.info('Batch done: {}, ok: {}'.format(batch.name, res))
         return res
 
 
