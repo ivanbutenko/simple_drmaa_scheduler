@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='simple_drmaa_scheduler',
-    version='0.0.9',
+    version='0.1.0',
     packages=['scheduler', 'scheduler.parser', 'scheduler.executor'],
     url='',
     license='',
