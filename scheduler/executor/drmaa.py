@@ -17,7 +17,6 @@ class DRMAAExecutor(Executor):
     def __init__(self, stop_on_first_error: bool = False, max_jobs: int = None, skip_already_done=False):
         super().__init__(stop_on_first_error, max_jobs, skip_already_done)
         self._session = drmaa.Session()
-        self._drmaa_log_dir = ''
         self._session.initialize()
 
     def _job_status(self, job: Job) -> Executor.JobStatus:
@@ -80,9 +79,6 @@ class DRMAAExecutor(Executor):
         return jt
 
     def _submit(self, job_spec: JobSpec)->Job:
-        if self._drmaa_log_dir:
-            makedirs(self._drmaa_log_dir)
-
         try:
             jt = self._create_template(job_spec)
 
