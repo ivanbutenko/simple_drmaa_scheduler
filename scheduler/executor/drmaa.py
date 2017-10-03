@@ -94,7 +94,7 @@ class DRMAAExecutor(Executor):
                 drmaa.InvalidAttributeValueException) as e:
             logger.error('drmaa exception in _submit: {}'.format(e))
             # FIXME handle drmaa exceptions
-            return None
+            raise e
 
     def shutdown(self):
         self._session.exit()
