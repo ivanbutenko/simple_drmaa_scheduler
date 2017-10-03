@@ -1,6 +1,10 @@
 import shlex
 from genericpath import exists
 
+import datetime
+
+import math
+
 from scheduler.job import Job, JobSpec
 import logging
 logger = logging.getLogger(__name__)
@@ -22,18 +26,18 @@ def print_job_error(job: Job):
         command=full_command,
     ))
 
-    logger.error("\tStart time: {start_time}, end time: {end_time}, total seconds: {time} s.".format(
+    logger.error("\tStart time: {start_time}, end time: {end_time}, total seconds: {time}".format(
         start_time=job.start_time,
         end_time=job.end_time,
-        time=(job.end_time - job.start_time)
+        time=datetime.timedelta(seconds=math.trunc(job.end_time - job.start_time))
     ))
 
 
 def print_job_ok(job: Job):
-    logger.info("Job {name} (id: {id}) successfully finished, time: {time} s.".format(
+    logger.info("Job {name} (id: {id}) successfully finished, time: {time}".format(
         name=job.spec.name,
         id=job.job_id,
-        time=(job.end_time - job.start_time)
+        time=datetime.timedelta(seconds=math.trunc(job.end_time - job.start_time))
     ))
 
 
